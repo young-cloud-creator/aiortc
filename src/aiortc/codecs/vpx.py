@@ -16,11 +16,11 @@ from .base import Decoder, Encoder
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_BITRATE = 500000  # 500 kbps
-MIN_BITRATE = 250000  # 250 kbps
-MAX_BITRATE = 1500000  # 1.5 Mbps
+DEFAULT_BITRATE = 10_000000  # 10 Mbps
+MIN_BITRATE = 5_000000  # 5 Mbps
+MAX_BITRATE = 20_000000  # 50 Mbps
 
-MAX_FRAME_RATE = 30
+MAX_FRAME_RATE = 120
 PACKET_MAX = 1300
 
 DESCRIPTOR_T = TypeVar("DESCRIPTOR_T", bound="VpxPayloadDescriptor")
@@ -39,13 +39,13 @@ def number_of_threads(pixels: int, cpus: int) -> int:
 
 class VpxPayloadDescriptor:
     def __init__(
-        self,
-        partition_start: int,
-        partition_id: int,
-        picture_id: Optional[int] = None,
-        tl0picidx: Optional[int] = None,
-        tid: Optional[tuple[int, int]] = None,
-        keyidx: Optional[int] = None,
+            self,
+            partition_start: int,
+            partition_id: int,
+            picture_id: Optional[int] = None,
+            tl0picidx: Optional[int] = None,
+            tid: Optional[tuple[int, int]] = None,
+            keyidx: Optional[int] = None,
     ) -> None:
         self.partition_start = partition_start
         self.partition_id = partition_id
@@ -188,18 +188,18 @@ class Vp8Encoder(Encoder):
         self.__target_bitrate = DEFAULT_BITRATE
 
     def encode(
-        self, frame: Frame, force_keyframe: bool = False
+            self, frame: Frame, force_keyframe: bool = False
     ) -> tuple[list[bytes], int]:
         assert isinstance(frame, VideoFrame)
         if frame.format.name != "yuv420p":
             frame = frame.reformat(format="yuv420p")
 
         if self.codec and (
-            frame.width != self.codec.width
-            or frame.height != self.codec.height
-            # We only adjust bitrate if it changes by over 10%.
-            or abs(self.target_bitrate - self.codec.bit_rate) / self.codec.bit_rate
-            > 0.1
+                frame.width != self.codec.width
+                or frame.height != self.codec.height
+                # We only adjust bitrate if it changes by over 10%.
+                or abs(self.target_bitrate - self.codec.bit_rate) / self.codec.bit_rate
+                > 0.1
         ):
             self.codec = None
 
@@ -275,7 +275,7 @@ class Vp8Encoder(Encoder):
         while pos < length:
             descr_bytes = bytes(descr)
             size = min(length - pos, PACKET_MAX - len(descr_bytes))
-            payloads.append(descr_bytes + buffer[pos : pos + size])
+            payloads.append(descr_bytes + buffer[pos: pos + size])
             descr.partition_start = 0
             pos += size
         return payloads

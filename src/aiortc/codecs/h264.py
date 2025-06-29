@@ -17,11 +17,11 @@ from .base import Decoder, Encoder
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_BITRATE = 1000000  # 1 Mbps
-MIN_BITRATE = 500000  # 500 kbps
-MAX_BITRATE = 3000000  # 3 Mbps
+DEFAULT_BITRATE = 10_000000  # 10 Mbps
+MIN_BITRATE = 5_000000  # 5 Mbps
+MAX_BITRATE = 20_000000  # 50 Mbps
 
-MAX_FRAME_RATE = 30
+MAX_FRAME_RATE = 120
 PACKET_MAX = 1300
 
 NAL_TYPE_FU_A = 28
@@ -151,10 +151,10 @@ class H264Encoder(Encoder):
         while offset < len(data):
             if num_larger_packets > 0:
                 num_larger_packets -= 1
-                payload = data[offset : offset + package_size + 1]
+                payload = data[offset: offset + package_size + 1]
                 offset += package_size + 1
             else:
-                payload = data[offset : offset + package_size]
+                payload = data[offset: offset + package_size]
                 offset += package_size
 
             if offset == len(data):
@@ -169,7 +169,7 @@ class H264Encoder(Encoder):
 
     @staticmethod
     def _packetize_stap_a(
-        data: bytes, packages_iterator: Iterator[bytes]
+            data: bytes, packages_iterator: Iterator[bytes]
     ) -> tuple[bytes, bytes]:
         counter = 0
         available_size = PACKET_MAX - STAP_A_HEADER_SIZE
@@ -221,11 +221,11 @@ class H264Encoder(Encoder):
             # Find the end of the NAL unit (end of buffer OR next start code)
             i = buf.find(b"\x00\x00\x01", i)
             if i == -1:
-                yield buf[nal_start : len(buf)]
+                yield buf[nal_start: len(buf)]
                 return
             elif buf[i - 1] == 0:
                 # 4-byte start code case, jump back one byte
-                yield buf[nal_start : i - 1]
+                yield buf[nal_start: i - 1]
             else:
                 yield buf[nal_start:i]
 
@@ -246,14 +246,14 @@ class H264Encoder(Encoder):
         return packetized_packages
 
     def _encode_frame(
-        self, frame: av.VideoFrame, force_keyframe: bool
+            self, frame: av.VideoFrame, force_keyframe: bool
     ) -> Iterator[bytes]:
         if self.codec and (
-            frame.width != self.codec.width
-            or frame.height != self.codec.height
-            # we only adjust bitrate if it changes by over 10%
-            or abs(self.target_bitrate - self.codec.bit_rate) / self.codec.bit_rate
-            > 0.1
+                frame.width != self.codec.width
+                or frame.height != self.codec.height
+                # we only adjust bitrate if it changes by over 10%
+                or abs(self.target_bitrate - self.codec.bit_rate) / self.codec.bit_rate
+                > 0.1
         ):
             self.buffer_data = b""
             self.buffer_pts = None
@@ -288,7 +288,7 @@ class H264Encoder(Encoder):
             yield from self._split_bitstream(data_to_send)
 
     def encode(
-        self, frame: Frame, force_keyframe: bool = False
+            self, frame: Frame, force_keyframe: bool = False
     ) -> tuple[list[bytes], int]:
         assert isinstance(frame, av.VideoFrame)
         packages = self._encode_frame(frame, force_keyframe)
